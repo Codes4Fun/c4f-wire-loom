@@ -1,0 +1,13 @@
+
+div[data-loom="true"][data-collapsed="true"] {
+    min-width: 38px;
+    width: 38px;
+}
+
+div[data-loom="true"][data-collapsed="true"] [data-testid="node-inner-wrapper"] {
+    min-width: 38px;
+}
+
+div[data-loom="true"][data-collapsed="true"] [data-testid="slot-connection-dot"] {
+    display: none;
+}
