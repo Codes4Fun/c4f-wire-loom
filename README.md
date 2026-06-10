@@ -46,6 +46,8 @@ The basic nodes are:
 
 There are type specific nodes that prepend the type to the label to avoid name collisions, like nodes for the IMAGE type is named `Loom Image In` and `Loom Image Out`, and if a label is not provided it will automatically use "IMAGE" and if a label is provided like "image2" it will stored/retreived in the loom as "IMAGE_image2". The supported types are MODEL, CLIP, VAE, CONDITIONING, IMAGE, AUDIO, LATENT, SAMPLER, SIGMAS, NOISE.
 
+And yes, you can have looms inside of looms! Like if you wanted a different model for upscaling, you can have it in a separate loom to avoid name collisions and then put that inside of your main loom, and pull it out when your sampler wants to upscale.
+
 ## Simple Tutorial
 
 I recommend starting off by placing `Loom Split` nodes and linking them together (tip: holding alt-key and click dragging automatically clones a node):
