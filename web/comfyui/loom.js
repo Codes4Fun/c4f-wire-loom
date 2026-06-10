@@ -377,8 +377,9 @@ app.registerExtension({
                         const dropFromNode = graph.getNodeById(dropLink.target_id);
                         if (dropFromNode) {
                             const dropFromSlot = dropFromNode.inputs[dropLink.target_slot]
-                            if (dropFromSlot.name)
-                                newNode.widgets[0].value = dropFromSlot.name;
+                            const label = dropFromSlot.label || dropFromSlot.name;
+                            if (label)
+                                newNode.widgets[0].value = label;
                         }
                     }
                 } else if (this.state.connectingTo === "input") {
@@ -390,7 +391,8 @@ app.registerExtension({
                         const dropLink = graph.getLink(slot.link);
                         const dropFromNode = graph.getNodeById(dropLink.origin_id);
                         if (dropFromNode?.type == 'PrimitiveFloat'
-                            || dropFromNode?.type == 'PrimitiveInt') {
+                         || dropFromNode?.type == 'PrimitiveInt'
+                         || dropFromNode?.type == 'PrimitiveStringMultiline') {
                             const label = dropFromNode.widgets[0]._state.label;
                             if (label)
                                 newNode.widgets[0].value = label;
