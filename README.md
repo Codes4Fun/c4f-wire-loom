@@ -66,11 +66,11 @@ If you needed to add a second image, you would need to uncollapse the nodes and 
 
 <img width="842" height="421" alt="tutorial-4" src="https://github.com/user-attachments/assets/6d2c96ff-ad5d-448c-adba-558f24fde28d" />
 
-In regard to labels, if you rename the widgets (a right click menu option) of `Int` primitive nodes or `Float` primitive nodes, it will automatically take the widget name as the label when attaching them to the loom. So for example renaming a `Float` nodes widget to `cfg`:
+In regard to labels, if you rename the widgets (a right click menu option) of `Int` primitive nodes or `Float` primitive nodes, it will automatically take the widget name as the label when first attaching them to the loom (note: it doesn't update after it's been attached). So for example renaming a `Float` nodes widget to `cfg`:
 
 <img width="604" height="165" alt="tutorial-5" src="https://github.com/user-attachments/assets/15360d8a-8d3f-440b-ba94-55a74501a205" />
 
-Attaching the `Float` node would then automatically set renamed widget as it's label. Also nodes with widgets like the `CFG Guider` node for example, will automatically take the widget label when connected to the loom:
+Attaching the `Float` node would then automatically set renamed widget as it's label when first created. Also nodes with widgets like the `CFG Guider` node for example, will automatically take the widget label when connected to the loom:
 
 <img width="833" height="255" alt="tutorial-6" src="https://github.com/user-attachments/assets/28f2511e-f892-4506-a1b0-40ce607ee555" />
 
