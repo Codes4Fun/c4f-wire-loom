@@ -16,7 +16,7 @@ It's completely functional but needs some optimization.
 
 Nodes 2.0 has bugs that make using loom nodes a little harder, for example if you try to move a node by clicking and dragging the arrow icon, Nodes 2.0 will toggle node collapse, something that doesn't happen to the original node system. I may create a workaround for that issue.
 
-## Detailed Explanation
+## Detailed Description
 
 Let's say we want to organize our nodes such that we have a bunch related to our prompts, image resolution, batch, and seed control. Another group for model related settings. And finally nodes for sampling. You would end up with something like this:
 
@@ -37,6 +37,14 @@ And if convert your groups into subgraphs and connect up the widgets you can end
 To take that a step further you could use the same prompt subgraph to go through multiple model/sampler subgraphs:
 
 <img width="3499" height="1178" alt="loom-iso-example" src="https://github.com/user-attachments/assets/0e038eb3-9d4b-4f9d-9c71-0988e517f028" />
+
+The basic nodes are:
+ * `Loom In` - inserts any kind of wire into the loom.
+ * `Loom Out` - gets any kind of wire in the loom.
+ * `Loom Join` - joins two looms, the second loom will override conflicting wires.
+ * `Loom Split` - a beauty node, that allows wires to go out in multiple directions.
+
+There are type specific nodes that prepend the type to the label to avoid name collisions, like nodes for the IMAGE type is named `Loom Image In` and `Loom Image Out`, and if a label is not provided it will automatically use "IMAGE" and if a label is provided like "image2" it will stored/retreived in the loom as "IMAGE_image2". The supported types are MODEL, CLIP, VAE, CONDITIONING, IMAGE, AUDIO, LATENT, SAMPLER, SIGMAS, NOISE.
 
 ## Simple Tutorial
 
