@@ -1,5 +1,5 @@
 
-# Loom Wire Nodes
+# Wire Loom Nodes
 
 The purpose of a wire loom (also known as a wire sleeve) is to organize, bundle, and protect wires. It can declutter your workflow, but also makes subgraphs more useful for creating custom interfaces.
 
