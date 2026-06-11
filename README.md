@@ -8,7 +8,7 @@ What are the advantages of these over Set/Get Nodes? There is a lot of overlap b
 - [Status](#status)
 - [Detailed Explanation](#detailed-explanation)
 - [Simple Tutorial](#simple-tutorial)
-- [Gallery](#gallery)
+- [Gallery and Demos](#gallery-and-demos)
 
 ## Status
 
@@ -76,10 +76,38 @@ Attaching the `Float` node output would then automatically use the widgets new n
 
 <img width="833" height="255" alt="tutorial-6" src="https://github.com/user-attachments/assets/28f2511e-f892-4506-a1b0-40ce607ee555" />
 
-## Gallery
+## Gallery and Demos
+### LongCat Edit Demo
+[loom_longcat.json](demos/loom_longcat.json) workflow.
 
-Lens Example, that allows you to select turbo with a boolean widget
+LongCat Edit demo, is an example of how to build a combo box for selecting models and a simple prompt replacer.
+
+<img width="1644" height="764" alt="loom-longcat" src="https://github.com/user-attachments/assets/049d87ca-867d-4e99-830f-d5161eef0420" />
+
+A closer look at the LongCat Edit demo's model subgraph combo box setup:
+
+<img width="3459" height="1591" alt="loom-longcat-model" src="https://github.com/user-attachments/assets/f02b242d-e7d1-4844-9921-ecbe703f6efe" />
+
+### Qwen Edit 2511 Demo
+[loom_qwen_edit_2511.json](demos/loom_qwen_edit_2511.json) workflow.
+
+Qwen Edit 2511 demo, is a more complex example of subgraphs that modifying looms in a stream of edits.
+
+<img width="3658" height="1878" alt="loom-qwen_edit_2511" src="https://github.com/user-attachments/assets/8456f76a-5d93-4927-b097-33e16e46ded4" />
+
+### Lens Demo
+[loom_lens.json](demos/loom_lens.json) workflow.
+Lens Example, that allows you to select turbo with a boolean widget.
+
+<img width="795" height="683" alt="loom-lens" src="https://github.com/user-attachments/assets/f00ec8fc-8543-4ee1-911f-e928885bb8d8" />
+
+Subgraph of the prompt:
 
 <img width="720" height="913" alt="lens-prompt" src="https://github.com/user-attachments/assets/f06d7faf-cb75-4325-9dab-194e8b0e2e72" />
+
+Subgraph of the model:
+
 <img width="1433" height="813" alt="lens-model" src="https://github.com/user-attachments/assets/9ebd70a8-31f5-4cad-82f0-d0c7fb0612ea" />
+
+Subgraph of the sampler:
 <img width="1271" height="403" alt="lens-sampler-subgraph" src="https://github.com/user-attachments/assets/50730666-e2e3-41e0-b4d0-32f649f48a8c" />
