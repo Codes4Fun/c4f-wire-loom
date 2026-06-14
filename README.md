@@ -3,7 +3,7 @@
 
 The purpose of a wire loom (also known as a wire sleeve) is to organize, bundle, and protect wires. It can declutter your workflow, but also makes subgraphs more useful for creating custom interfaces.
 
-What are the advantages of these over Set/Get Nodes? There is a lot of overlap but it simplifies some things better.
+What are the advantages of these over Set/Get Nodes? There is a lot of overlap but looms are conceptually more of a stream, where you can take something out, modify it and put it back in, things down stream get the modified version.
 
 - [Status](#status)
 - [Detailed Explanation](#detailed-explanation)
@@ -12,13 +12,13 @@ What are the advantages of these over Set/Get Nodes? There is a lot of overlap b
 
 ## Status
 
-It's completely functional but needs some optimization.
+It's completely functional but needs some optimization, and possibly bug fixes, design changes.
 
-Nodes 2.0 has bugs that make using loom nodes a little harder, for example if you try to move a node by clicking and dragging the arrow icon, Nodes 2.0 will toggle node collapse, something that doesn't happen to the original node system. I may create a workaround for that issue.
+Nodes 2.0 has bugs that make using loom nodes a little harder, for example if you try to move a node by clicking and dragging the arrow icon, Nodes 2.0 will also toggle node collapse, something that doesn't happen in the original node system. I have created a work around for that issue.
 
 ## Detailed Description
 
-Let's say we want to organize our nodes such that we have a bunch related to our prompts, image resolution, batch, and seed control. Another group for model related settings. And finally nodes for sampling. You would end up with something like this:
+There are multiple ways to organize nodes but let's say we want to organize our nodes such we group our prompts, image resolution, batch, and seed control. Another group for model related settings. And finally nodes for conditioning and sampling. You would end up with something like this:
 
 <img width="1606" height="664" alt="sorted" src="https://github.com/user-attachments/assets/ed055165-c63e-454d-b2a0-acb221338b01" />
 
@@ -42,7 +42,7 @@ The basic nodes are:
  * `Loom In` - inserts any kind of wire into the loom.
  * `Loom Out` - gets any kind of wire in the loom.
  * `Loom Join` - joins two looms, the second loom will override conflicting wires.
- * `Loom Split` - a beauty node, that allows wires to go out in multiple directions.
+ * `Loom Split` - a layout node, that allows wires to go out in multiple directions.
 
 There are type specific nodes that prepend the type to the label to avoid name collisions, like nodes for the IMAGE type is named `Loom Image In` and `Loom Image Out`, and if a label is not provided it will automatically use "IMAGE" and if a label is provided like "image2" it will stored/retreived in the loom as "IMAGE_image2". The supported types are MODEL, CLIP, VAE, CONDITIONING, IMAGE, AUDIO, LATENT, SAMPLER, SIGMAS, NOISE.
 

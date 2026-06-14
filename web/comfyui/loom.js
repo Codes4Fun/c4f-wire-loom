@@ -269,7 +269,7 @@ function addNewElementListener(root, handlers, index=0) {
     observer.observe(root, { childList: true, subtree: false });
 }
 
-function markLoomNode(node) {
+function modifyLoomNode(node) {
     if (!node.hasAttribute('data-node-id'))
         return;
 
@@ -281,7 +281,34 @@ function markLoomNode(node) {
     if (!isLoomNode(cuiNode))
         return;
 
+    // for css style
     node.setAttribute('data-loom', 'true');
+
+    // workaround for drag collapse issue
+    const node_collapse_button = node.querySelector('[data-testid="node-collapse-button"]')
+    if (!node_collapse_button)
+        return;
+    node_collapse_button.style.pointerEvents = 'none';
+    let mousedown = false;
+    let mousedrag = false;
+    function onmousedown(e) {
+        mousedrag = false;
+        mousedown = true;
+    }
+    function onmousemove(e) {
+        mousedrag = true;
+    }
+    function onmouseup(e) {
+        if (e.button != 0 || !mousedown || mousedrag) return;
+        cuiNode.collapse();
+    }
+    const parentElement = node_collapse_button.parentElement;
+    //parentElement.addEventListener('mousedown', onmousedown);
+    //parentElement.addEventListener('mousemove', onmousemove);
+    //parentElement.addEventListener('mouseup', onmouseup);
+    parentElement.onmousedown = onmousedown;
+    parentElement.onmousemove = onmousemove;
+    parentElement.onmouseup = onmouseup;
 }
 
 function setupLoomNodeStyler() {
@@ -293,7 +320,7 @@ function setupLoomNodeStyler() {
 
     addNewElementListener(gcc, [
         (node) => node.getAttribute('data-testid') == 'transform-pane',
-        markLoomNode
+        modifyLoomNode
     ]);
 }
 
@@ -404,13 +431,13 @@ app.registerExtension({
                 graph.removeLink(link.id);
                 if (originNode)
                     originNode.connect(originSlot, newNode, 0);
-                else {
+                else if (graph.inputs) {
                     const newNodeSlot = newNode.inputs[0];
                     graph.inputs[originSlot].connect(newNodeSlot, newNode);
                 }
                 if (targetNode)
                     newNode.connect(0, targetNode, targetSlot);
-                else {
+                else if (graph.outputs) {
                     const newNodeSlot = newNode.outputs[0];
                     graph.outputs[targetSlot].connect(newNodeSlot, newNode);
                 }
