@@ -525,7 +525,8 @@ app.registerExtension({
                     this._collapsed_width = LiteGraph.NODE_TITLE_HEIGHT;
                 out[2] = LiteGraph.NODE_TITLE_HEIGHT;
             }
-            updateSlotDirs( this );
+            if (app.canvas.dirty_bgcanvas)
+                updateSlotDirs( this );
         };
 
         const super_drawTitleText = nodeType.prototype.drawTitleText;
