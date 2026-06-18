@@ -70,53 +70,85 @@ function isDirectionVertical( dir ) {
     return false;
 }
 
-function getLinkOtherNode(node, slot, isInput) {
-    // Get the link connected to this slot
+function getFirstLink(node, slot, isInput) {
     const linkId = isInput? slot?.link : slot?.links?.[0];
 
-    if (linkId == null || linkId === -1) // No connection - default direction
+    if (linkId == null || linkId === -1)
         return null;
 
     const link = node.graph?.links?.[linkId];
-    if (!link)
-        return null;
-
-    // Get the connected node
-    const connectedNodeId = isInput ? link.origin_id : link.target_id;
-    const connectedNode = node.graph.getNodeById(connectedNodeId);
-    return connectedNode;
+    return link;
 }
 
-function getLinkDelta(node, connectedNode, isInput) {
-    // Calculate relative position from this node to connected node
-    let dx = connectedNode.pos[0] - node.pos[0];
-    let dy = connectedNode.pos[1] - node.pos[1];
-    if (isInput) {
-        if (!connectedNode.flags?.collapsed) {
-            dx += connectedNode.size[0];
+function getLinkOriginSlot(graph, link) {
+    const id = link.origin_id;
+    // subgraph io
+    if (id == -10)
+        return graph.inputs[link.origin_slot];
+    // node io
+    const node = graph.getNodeById(id);
+    if (!node)
+        return null;
+    return node.outputs[link.origin_slot];
+}
+
+function getLinkTargetSlot(graph, link) {
+    const id = link.target_id;
+    // subgraph io
+    if (id == -20)
+        return graph.outputs[link.target_slot];
+    // node io
+    const node = graph.getNodeById(id);
+    if (!node)
+        return null;
+    return node.inputs[link.target_slot];
+}
+
+function getSlotPos(slot, isInput) {
+    // sugraph io has pos
+    if (slot.pos)
+        return slot.pos;
+    // we don't have access to slot pos stores, so simple calculation
+    const node = slot.node;
+    let x = node.pos[0];
+    let y = node.pos[1];
+    if (node.flags?.collapsed) {
+        y -= LiteGraph.NODE_TITLE_HEIGHT;
+    }
+    if (!isInput) { // the output side of the node
+        if (node.flags?.collapsed) {
+            x += node._collapsed_width || LiteGraph.NODE_TITLE_HEIGHT;
         } else {
-            dx += connectedNode._collapsed_width || LiteGraph.NODE_TITLE_HEIGHT;
+            x += node.size[0];
         }
     }
-    return [dx, dy];
+    return [x,y];
 }
 
-function getLinkAngle(node, otherNode, isInput) {
-    const [dx, dy] = getLinkDelta(node, otherNode, isInput);
+function getSlotDelta(origin, target) {
+    const opos = getSlotPos(origin, false);
+    const tpos = getSlotPos(target, true);
+    return [tpos[0] - opos[0], tpos[1] - opos[1]];
+}
+
+function getLinkDelta(graph, link, fromInput) {
+    const origin = getLinkOriginSlot(graph, link);
+    const target = getLinkTargetSlot(graph, link);
+    const delta = getSlotDelta(origin, target);
+    if (fromInput)
+        return [-delta[0],-delta[1]];
+    return delta;
+}
+
+function getLinkAngle(graph, link, fromInput) {
+    const [dx, dy] = getLinkDelta(graph, link, fromInput);
     // Use atan2 to get angle, then map to cardinal direction
     const angle = Math.atan2(dy, dx);
     return angle;
 }
 
-function getLinkDirection(node, slot, isInput) {
-    const otherNode = getLinkOtherNode(node, slot, isInput);
-    if (!otherNode)
-        return null;
-
-    const angle = getLinkAngle(node, otherNode, isInput);
-    if (angle == null)
-        return null;
-
+function getLinkDirection(graph, link, fromInput) {
+    const angle = getLinkAngle(graph, link, fromInput);
     // Map angle to direction (pointing toward connected node)
     if (angle >= -Math.PI/4 && angle < Math.PI/4) { // -45 <= angle < 45
         return LiteGraph.RIGHT;
@@ -129,82 +161,93 @@ function getLinkDirection(node, slot, isInput) {
     }
 }
 
-function getLinkHorizontalDirection(node, slot, isInput) {
-    const otherNode = getLinkOtherNode(node, slot, isInput);
-    if (!otherNode)
+function getLinkHorizontalDirectionFromNodeSlot(node, slot, isInput) {
+    const link = getFirstLink(node, slot, isInput);
+    if (!link)
         return null;
 
-    const [dx, dy] = getLinkDelta(node, otherNode, isInput);
-    if (dx < 0)
+    const delta = getLinkDelta(node.graph, link, isInput);
+    if (delta[0] < 0)
         return LiteGraph.LEFT;
     return LiteGraph.RIGHT;
 }
 
-function getLinkVerticalDirection(node, slot, isInput) {
-    const otherNode = getLinkOtherNode(node, slot, isInput);
-    if (!otherNode)
+function getLinkVerticalDirectionFromNodeSlot(node, slot, isInput) {
+    const link = getFirstLink(node, slot, isInput);
+    if (!link)
         return null;
 
-    const [dx, dy] = getLinkDelta(node, otherNode, isInput);
-    if (dy < 0)
+    const delta = getLinkDelta(node.graph, link, isInput);
+    if (delta[1] < 0)
         return LiteGraph.UP;
     return LiteGraph.DOWN;
 }
 
+function getLinkDirectionFromNodeSlot(node, slot, isInput) {
+    const link = getFirstLink(node, slot, isInput);
+    if (!link)
+        return null;
+
+    const dir = getLinkDirection(node.graph, link, isInput);
+    return dir;
+}
+
 function updateSlotDirs( node ) {
-    if ( node.flags?.collapsed ) {
-        if (loom_dirFromInput
-         && node.type != 'LoomJoinNode'
-         && node.type != 'LoomSplitNode'
-         && node.inputs[0].link != null
-         && node.outputs[0].links?.length
-        ) {
-            const inputDir = getLinkDirection( node, node.inputs[0], true );
-            node.inputs[0].dir = inputDir;
-            node.outputs[0].dir = getOppositeDirection( inputDir );
-            if (isDirectionVertical(inputDir))
-            {
-                for (let i = 1; i < node.inputs.length; i++) {
-                    const slot = node.inputs[i];
-                    const dir = getLinkHorizontalDirection(node, slot, true);
-                    slot.dir = dir;
-                }
-                for (let i = 1; i < node.outputs.length; i++) {
-                    const slot = node.outputs[i];
-                    const dir = getLinkHorizontalDirection(node, slot, false);
-                    slot.dir = dir;
-                }
-            }
-            else
-            {
-                for (let i = 1; i < node.inputs.length; i++) {
-                    const slot = node.inputs[i];
-                    const dir = getLinkVerticalDirection(node, slot, true);
-                    slot.dir = dir;
-                }
-                for (let i = 1; i < node.outputs.length; i++) {
-                    const slot = node.outputs[i];
-                    const dir = getLinkVerticalDirection(node, slot, false);
-                    slot.dir = dir;
-                }
-            }
-            return;
-        }
+    if ( !node.flags?.collapsed ) {
         for (const slot of node._concreteInputs) {
-            const dir = getLinkDirection( node, slot, true );
-            slot.dir = dir;
+            slot.dir = null;
         }
         for (const slot of node._concreteOutputs) {
-            const dir = getLinkDirection( node, slot, false );
-            slot.dir = dir;
+            slot.dir = null;
+        }
+        return;
+    }
+    if (loom_dirFromInput
+     && node.type != 'LoomJoinNode'
+     && node.type != 'LoomSplitNode'
+     && node.inputs[0].link != null
+     && node.outputs[0].links?.length
+    ) {
+        // update main loom input slot direction
+        const inputDir = getLinkDirectionFromNodeSlot( node, node.inputs[0], true );
+        node.inputs[0].dir = inputDir;
+        node.outputs[0].dir = getOppositeDirection( inputDir );
+        // update other slots perpendicular
+        if (isDirectionVertical(inputDir))
+        {
+            for (let i = 1; i < node.inputs.length; i++) {
+                const slot = node.inputs[i];
+                const dir = getLinkHorizontalDirectionFromNodeSlot(node, slot, true);
+                slot.dir = dir;
+            }
+            for (let i = 1; i < node.outputs.length; i++) {
+                const slot = node.outputs[i];
+                const dir = getLinkHorizontalDirectionFromNodeSlot(node, slot, false);
+                slot.dir = dir;
+            }
+        }
+        else
+        {
+            for (let i = 1; i < node.inputs.length; i++) {
+                const slot = node.inputs[i];
+                const dir = getLinkVerticalDirectionFromNodeSlot(node, slot, true);
+                slot.dir = dir;
+            }
+            for (let i = 1; i < node.outputs.length; i++) {
+                const slot = node.outputs[i];
+                const dir = getLinkVerticalDirectionFromNodeSlot(node, slot, false);
+                slot.dir = dir;
+            }
         }
         return;
     }
     for (const slot of node._concreteInputs) {
-        slot.dir = null;
+        const dir = getLinkDirectionFromNodeSlot( node, slot, true );
+        slot.dir = dir;
     }
     for (const slot of node._concreteOutputs) {
-        slot.dir = null;
+        const dir = getLinkDirectionFromNodeSlot( node, slot, false );
+        slot.dir = dir;
     }
 }
 
@@ -303,6 +346,7 @@ function modifyLoomNode(node) {
         cuiNode.collapse();
     }
     const parentElement = node_collapse_button.parentElement;
+    parentElement.style.cursor = 'pointer';
     //parentElement.addEventListener('mousedown', onmousedown);
     //parentElement.addEventListener('mousemove', onmousemove);
     //parentElement.addEventListener('mouseup', onmouseup);
@@ -397,7 +441,7 @@ app.registerExtension({
                 if (this.state.connectingTo === "output") {
                     const slot = newNode.outputs[1];
                     this._dropOnOutput(newNode, slot);
-                    slot.dir = getLinkDirection( newNode, slot, false );
+                    slot.dir = getLinkDirectionFromNodeSlot( newNode, slot, false );
                     if (any) {
                         // LoomOut -> nodeIn
                         const dropLink = graph.getLink(slot.links[0]);
@@ -413,7 +457,7 @@ app.registerExtension({
                     // nodeOut -> LoomIn
                     const slot = newNode.inputs[1];
                     this._dropOnInput(newNode, slot);
-                    slot.dir = getLinkDirection( newNode, slot, true );
+                    slot.dir = getLinkDirectionFromNodeSlot( newNode, slot, true );
                     if (any) {
                         const dropLink = graph.getLink(slot.link);
                         const dropFromNode = graph.getNodeById(dropLink.origin_id);
@@ -475,6 +519,7 @@ app.registerExtension({
     },
 
     async setup() {
+        // MARK: render links
         const super_renderAllLinkSegments = LGraphCanvas.prototype._renderAllLinkSegments;
         LGraphCanvas.prototype._renderAllLinkSegments = function (
             ctx, link, startPos, endPos, visibleReroutes, now,
@@ -489,10 +534,14 @@ app.registerExtension({
             const originNode = app.canvas.graph.getNodeById(link.origin_id);
             if (originNode && isLoomNode(originNode) && originNode.flags?.collapsed) {
                 startPos = originNode.getOutputPos(link.origin_slot);
+            } else {
+                startDirection = null;
             }
             const targetNode = app.canvas.graph.getNodeById(link.target_id);
             if (targetNode && isLoomNode(targetNode) && targetNode.flags?.collapsed) {
                 endPos = targetNode.getInputPos(link.target_slot);
+            } else {
+                endDirection = null;
             }
 
             super_renderAllLinkSegments.apply( this, [
@@ -510,12 +559,11 @@ app.registerExtension({
             return;
         //console.log('LOOM.beforeReg: "'+nodeData.name+'"');
 
-        /*
         const super_collapse = nodeType.prototype.collapse;
         nodeType.prototype.collapse = function(force) {
             super_collapse.apply(this, [force]);
             updateSlotDirs( this );
-        }*/
+        }
 
         const super_measure = nodeType.prototype.measure;
         nodeType.prototype.measure = function(out, ctx) {
