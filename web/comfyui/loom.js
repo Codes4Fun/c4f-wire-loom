@@ -342,7 +342,7 @@ function modifyLoomNode(node) {
         mousedrag = true;
     }
     function onmouseup(e) {
-        if (e.button != 0 || !mousedown || mousedrag) return;
+        if (e.button != 0 || e.ctrlKey || !mousedown || mousedrag) return;
         cuiNode.collapse();
     }
     const parentElement = node_collapse_button.parentElement;
