@@ -106,12 +106,15 @@ function getLinkTargetSlot(graph, link) {
 
 function getSlotPos(slot, isInput) {
     // sugraph io has pos
-    if (slot.pos)
+    if (!slot.node)
         return slot.pos;
     // we don't have access to slot pos stores, so simple calculation
     const node = slot.node;
     let x = node.pos[0];
     let y = node.pos[1];
+    if (!node.flags?.collapsed && slot.pos) {
+        return [x+slot.pos[0],y+slot.pos[1]];
+    }
     if (node.flags?.collapsed) {
         y -= LiteGraph.NODE_TITLE_HEIGHT;
     }
