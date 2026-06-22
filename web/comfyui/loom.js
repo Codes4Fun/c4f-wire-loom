@@ -12,20 +12,21 @@ const loom_typeNames = new Set([
  'LoomOutNode'
 ]);
 
-const loom_subTypeNames = [
- 'Model',
- 'Clip',
- 'VAE',
- 'Conditioning',
- 'Image',
- 'Audio',
- 'Latent',
- 'Sampler',
- 'Sigmas',
- 'Noise'
-];
+const loom_slotToNodeType = {
+    'MODEL': "Model",
+    'CLIP': "Clip",
+    'VAE': "VAE",
+    'CONDITIONING': "Conditioning",
+    'IMAGE': "Image",
+    'AUDIO': "Audio",
+    'LATENT': "Latent",
+    'SAMPLER': "Sampler",
+    'SIGMAS': "Sigmas",
+    'NOISE': "Noise",
+    'MASK': "Mask",
+};
 
-for (const subTypeName of loom_subTypeNames ) {
+for (const subTypeName of Object.values(loom_slotToNodeType)) {
     loom_typeNames.add(`LoomIn${subTypeName}Node`);
     loom_typeNames.add(`LoomOut${subTypeName}Node`);
 }
@@ -416,28 +417,20 @@ app.registerExtension({
                     targetNode.inputs[targetSlot].dir
                     : graph.outputNode.slots[targetSlot].dir;
                 
-                const half = LiteGraph.NODE_TITLE_HEIGHT * 0.5;
                 let name = this.state.connectingTo === "output"?
                     "LoomOut" :
                     "LoomIn";
-                let any = false;
-                switch(this.renderLinks[0].fromSlot.type) {
-                case 'MODEL': name += "ModelNode"; break;
-                case 'CLIP': name += "ClipNode"; break;
-                case 'VAE': name += "VAENode"; break;
-                case 'CONDITIONING': name += "ConditioningNode"; break;
-                case 'IMAGE': name += "ImageNode"; break;
-                case 'AUDIO': name += "AudioNode"; break;
-                case 'LATENT': name += "LatentNode"; break;
-                case 'SAMPLER': name += "SamplerNode"; break;
-                case 'SIGMAS': name += "SigmasNode"; break;
-                case 'NOISE': name += "NoiseNode"; break;
-                default:
-                    name += "Node";
-                    any = true;
-                    break;
+                let any = true;
+                const slotType = this.renderLinks[0].fromSlot.type;
+                const subtype = loom_slotToNodeType[slotType];
+                if (subtype) {
+                    name += subtype;
+                    any = false;
                 }
+                name += "Node";
+
                 const newNode = LiteGraph.createNode(name);
+                const half = LiteGraph.NODE_TITLE_HEIGHT * 0.5;
                 newNode.pos = [canvasX - half, canvasY + half];
                 newNode.flags.collapsed = true;
                 graph.add(newNode);

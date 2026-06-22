@@ -202,6 +202,7 @@ types_to_create = [
     ("Sampler","SAMPLER"),
     ("Sigmas","SIGMAS"),
     ("Noise","NOISE"),
+    ("Mask", "MASK"),
 ]
 
 loom_classes = {}
