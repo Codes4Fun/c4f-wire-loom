@@ -9,5 +9,5 @@ div[data-loom="true"][data-collapsed="true"] [data-testid="node-inner-wrapper"] 
 }
 
 div[data-loom="true"][data-collapsed="true"] [data-testid="slot-connection-dot"] {
-    display: none;
+    opacity: 0;
 }
