@@ -85,32 +85,31 @@ function getLinkOriginSlot(graph, link) {
     const id = link.origin_id;
     // subgraph io
     if (id == -10)
-        return graph.inputs[link.origin_slot];
+        return {node:null, slot:graph.inputs[link.origin_slot]};
     // node io
     const node = graph.getNodeById(id);
     if (!node)
         return null;
-    return node.outputs[link.origin_slot];
+    return {node, slot:node.outputs[link.origin_slot]};
 }
 
 function getLinkTargetSlot(graph, link) {
     const id = link.target_id;
     // subgraph io
     if (id == -20)
-        return graph.outputs[link.target_slot];
+        return {node:null, slot:graph.outputs[link.target_slot]};
     // node io
     const node = graph.getNodeById(id);
     if (!node)
         return null;
-    return node.inputs[link.target_slot];
+    return {node, slot:node.inputs[link.target_slot]};
 }
 
-function getSlotPos(slot, isInput) {
+function getSlotPos(node, slot, isInput) {
     // sugraph io has pos
-    if (!slot.node)
+    if (!node)
         return slot.pos;
     // we don't have access to slot pos stores, so simple calculation
-    const node = slot.node;
     let x = node.pos[0];
     let y = node.pos[1];
     if (!node.flags?.collapsed && slot.pos) {
@@ -130,8 +129,8 @@ function getSlotPos(slot, isInput) {
 }
 
 function getSlotDelta(origin, target) {
-    const opos = getSlotPos(origin, false);
-    const tpos = getSlotPos(target, true);
+    const opos = getSlotPos(origin.node, origin.slot, false);
+    const tpos = getSlotPos(target.node, target.slot, true);
     return [tpos[0] - opos[0], tpos[1] - opos[1]];
 }
 
