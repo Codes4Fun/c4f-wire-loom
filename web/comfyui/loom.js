@@ -687,3 +687,118 @@ function addCSS() {
 }
 addCSS();
 
+
+
+function loomGetSelectedIONodes(only_one_out) {
+    const nodes = [...app.canvas.selectedItems];
+    // only loom io nodes
+    for (let node of nodes) {
+        if (node.id < 0) {
+            console.log('fail: special node selected');
+            return [];
+        }
+        if (!node.type.startsWith('LoomIn') && !node.type.startsWith('LoomOut')) {
+            console.log('fail: only loom io nodes supported');
+            return [];
+        }
+        if (only_one_out && node.outputs[0].links.length > 1) {
+            console.log('fail: only one output supported');
+            return [];
+        }
+    }
+    return nodes;
+}
+
+function loomFlipSelected() {
+    const nodes = loomGetSelectedIONodes(true);
+    if (nodes.length < 2)
+        return;
+
+    // collect links
+    let links = {};
+    for (let node of nodes) {
+        const link_in = node.inputs[0].link;
+        const link_out = node.outputs[0].links[0];
+        if (link_in != null) {
+            if (!links[link_in])
+                links[link_in] = {id:link_in};
+            links[link_in].target = node;
+        }
+        if (link_out != null) {
+            if (!links[link_out])
+                links[link_out] = {id:link_out};
+            links[link_out].origin = node;
+        }
+    }
+    let input_links = [];
+    let output_links = [];
+    let mid_links = [];
+    for (let link of Object.values(links)) {
+        if (link.origin && link.target) {
+            mid_links.push(link);
+        } else if (!link.origin) {
+            input_links.push(link);
+        } else {
+            output_links.push(link);
+        }
+    }
+
+    const graph = app.canvas.graph;
+    for (let link of input_links) {
+        const llink = graph.links[link.id];
+        link.origin_id = llink.origin_id;
+        link.origin_slot = llink.origin_slot;
+        // get last node in chain
+        let cur_link = link;
+        let node = cur_link.target;
+        while (true) {
+            const next_link_id = node.outputs[0].links[0];
+            if (next_link_id == null)
+                break;
+            cur_link = links[next_link_id];
+            if (!cur_link || !cur_link.target)
+                break;
+            node = cur_link.target;
+        }
+        link.new_target = node;
+    }
+    for (let link of output_links) {
+        const llink = graph.links[link.id];
+        link.target_id = llink.target_id;
+        link.target_slot = llink.target_slot;
+        // get last node in chain
+        let cur_link = link;
+        let node = cur_link.origin;
+        while (true) {
+            const next_link_id = node.inputs[0].link;
+            if (next_link_id == null)
+                break;
+            cur_link = links[next_link_id];
+            if (!cur_link || !cur_link.origin)
+                break;
+            node = cur_link.origin;
+        }
+        link.new_origin = node;
+    }
+    // remove all links
+    for (let link of Object.values(links)) {
+        graph.removeLink(link.id);
+    }
+    // reconnect links
+    for (let link of mid_links) {
+        link.target.connect(0, link.origin, 0);
+    }
+    for (let link of input_links) {
+        const origin = graph.getNodeById(link.origin_id);
+        origin.connect(link.origin_slot, link.new_target, 0);
+    }
+    for (let link of output_links) {
+        const target = graph.getNodeById(link.target_id);
+        link.new_origin.connect(0, target, link.target_slot);
+    }
+    app.canvas.setDirty(true, true);
+}
+globalThis.loomFlipSelected = loomFlipSelected;
+
+
+
