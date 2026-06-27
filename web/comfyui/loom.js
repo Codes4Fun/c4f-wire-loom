@@ -382,6 +382,7 @@ app.registerExtension({
             const { canvasX, canvasY } = event;
 
             const canvas = app.canvas;
+            const graph = canvas.graph;
             const { lineWidth } = canvas.ctx;
             canvas.ctx.lineWidth = loom_lineWidth;
             const dpi = Math.max(window?.devicePixelRatio ?? 1, 1);
@@ -399,8 +400,6 @@ app.registerExtension({
                 );
 
                 if (!isLinkHit) continue;
-
-                const graph = this.renderLinks[0].node.graph;
 
                 const link = linkSegment;
 
@@ -467,18 +466,17 @@ app.registerExtension({
                 }
 
                 // changes links
-                graph.removeLink(link.id);
-                if (originNode)
-                    originNode.connect(originSlot, newNode, 0);
-                else if (graph.inputs) {
-                    const newNodeSlot = newNode.inputs[0];
-                    graph.inputs[originSlot].connect(newNodeSlot, newNode);
-                }
                 if (targetNode)
                     newNode.connect(0, targetNode, targetSlot);
                 else if (graph.outputs) {
                     const newNodeSlot = newNode.outputs[0];
                     graph.outputs[targetSlot].connect(newNodeSlot, newNode);
+                }
+                if (originNode)
+                    originNode.connect(originSlot, newNode, 0);
+                else if (graph.inputs) {
+                    const newNodeSlot = newNode.inputs[0];
+                    graph.inputs[originSlot].connect(newNodeSlot, newNode);
                 }
 
                 // set slot directions
