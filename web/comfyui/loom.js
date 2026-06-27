@@ -238,7 +238,9 @@ function updateSlotDirs( node ) {
             }
             for (let i = 1; i < node.outputs.length; i++) {
                 const slot = node.outputs[i];
-                const dir = getLinkVerticalDirectionFromNodeSlot(node, slot, false);
+                const dir = slot.name == 'exists'?
+                    getLinkDirectionFromNodeSlot( node, slot, true ) :
+                    getLinkVerticalDirectionFromNodeSlot(node, slot, false);
                 slot.dir = dir;
             }
         }
