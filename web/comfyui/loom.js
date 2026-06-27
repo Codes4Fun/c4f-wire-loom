@@ -2,6 +2,11 @@ import { app } from "../../scripts/app.js";
 
 let loom_lineWidth = 11;
 let loom_dirFromInput = true;
+let loom_dirSibAvg = true;
+
+function catch_error() {
+    console.log("break here!");
+}
 
 // MARK: Types
 
@@ -150,18 +155,38 @@ function getLinkAngle(graph, link, fromInput) {
     return angle;
 }
 
+function getDirFromAngle(angle) {
+    angle += Math.PI*3/4;
+    if (angle < 0) angle += Math.PI*2;
+    let dir = Math.trunc(angle * 2 / Math.PI);
+    switch(dir) {
+    case 0: return LiteGraph.UP;
+    case 1: return LiteGraph.RIGHT;
+    case 2: return LiteGraph.DOWN;
+    }
+    return LiteGraph.LEFT;
+}
+
+// get average direction from multiple links
+function getOutputSlotAverage(graph, slot) {
+    const links = slot.links || slot.linkIds || [];
+    if (links.length == 0)
+        return null;
+    let x = 0, y = 0;
+    for (const link_id of links) {
+        const link = graph.links[link_id];
+        const target = getLinkTargetSlot(graph, link);
+        const pos = getSlotPos(target.node, target.slot, true);
+        x += pos[0];
+        y += pos[1];
+    }
+    const s = 1 / links.length;
+    return [x * s, y * s];
+}
+
 function getLinkDirection(graph, link, fromInput) {
     const angle = getLinkAngle(graph, link, fromInput);
-    // Map angle to direction (pointing toward connected node)
-    if (angle >= -Math.PI/4 && angle < Math.PI/4) { // -45 <= angle < 45
-        return LiteGraph.RIGHT;
-    } else if (angle >= Math.PI/4 && angle < 3*Math.PI/4) { // 45 <= angle < 135
-        return LiteGraph.DOWN;
-    } else if (angle >= 3*Math.PI/4 || angle < -3*Math.PI/4) {
-        return LiteGraph.LEFT;
-    } else {
-        return LiteGraph.UP;
-    }
+    return getDirFromAngle(angle);
 }
 
 function getLinkHorizontalDirectionFromNodeSlot(node, slot, isInput) {
@@ -195,6 +220,23 @@ function getLinkDirectionFromNodeSlot(node, slot, isInput) {
     return dir;
 }
 
+function getLinkDirectionFromOrigin(node, slot) {
+    const link = getFirstLink(node, slot, true);
+    if (!link)
+        return null;
+
+    const graph = node.graph;
+    const origin = getLinkOriginSlot(graph, link);
+    const [px, py] = getSlotPos(origin.node, origin.slot, false);
+    let [x, y] = getOutputSlotAverage(graph, origin.slot);
+    x -= px;
+    y -= py;
+    const angle = Math.atan2(y, x);
+    const originDir = getDirFromAngle(angle);
+    const dir = getOppositeDirection(originDir);
+    return dir;
+}
+
 function updateSlotDirs( node ) {
     if ( !node.flags?.collapsed ) {
         for (const slot of node._concreteInputs) {
@@ -212,7 +254,9 @@ function updateSlotDirs( node ) {
      && node.outputs[0].links?.length
     ) {
         // update main loom input slot direction
-        const inputDir = getLinkDirectionFromNodeSlot( node, node.inputs[0], true );
+        const inputDir = loom_dirSibAvg?
+         getLinkDirectionFromOrigin( node, node.inputs[0] ) :
+         getLinkDirectionFromNodeSlot( node, node.inputs[0], true );
         node.inputs[0].dir = inputDir;
         node.outputs[0].dir = getOppositeDirection( inputDir );
         // update other slots perpendicular
