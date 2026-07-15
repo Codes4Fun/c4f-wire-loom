@@ -175,6 +175,11 @@ function getOutputSlotAverage(graph, slot) {
     let x = 0, y = 0;
     for (const link_id of links) {
         const link = graph.links[link_id];
+        if (!link) {
+            console.log(`workflow slot missing link ${link_id}`);
+            // TODO: make utility to find and prune these
+            continue;
+        }
         const target = getLinkTargetSlot(graph, link);
         const pos = getSlotPos(target.node, target.slot, true);
         x += pos[0];
